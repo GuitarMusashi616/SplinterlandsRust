@@ -16,6 +16,7 @@ mod battlefactory;
 mod battleproxy;
 mod carddata;
 mod roundrobin;
+mod targeting;
 
 fn test_reg() {
     let registry = cardparser::get_registry("assets/cards.csv").unwrap();
@@ -48,10 +49,5 @@ fn battle() {
 
 fn main() {
     // test_reg();
-    battle();   
-    battle();   
-    battle();   
-    battle();   
-    battle();   
     battle();   
 }

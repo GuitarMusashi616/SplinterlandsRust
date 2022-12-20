@@ -23,12 +23,24 @@ impl Monster {
         self.health
     }
 
+    pub fn set_health(&mut self, val: i32) {
+        self.health = val;
+    }
+
+    pub fn get_max_health(&self) -> i32 {
+        self.type_object.health
+    }
+
     pub fn is_alive(&self) -> bool {
         self.get_health() > 0
     }
 
     pub fn get_speed(&self) -> i32 {
         self.type_object.speed
+    }
+
+    pub fn get_damage(&self) -> i32 {
+        self.type_object.damage
     }
 
     pub fn get_name(&self) -> &str {

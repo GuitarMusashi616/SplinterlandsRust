@@ -1,6 +1,6 @@
 use std::collections::BinaryHeap;
 
-use crate::cardparser;
+use crate::{cardparser, targeting};
 use crate::registry::Registry;
 use crate::battlefactory::BattleFactory;
 use crate::enums::Outcome;
@@ -34,10 +34,27 @@ impl Battle {
         // let mut round_robin = self.get_monster_heap();
 
         while !round_robin.is_empty() {
-            let pick = round_robin.pop();
-            if let Some(x) = pick {
-                println!("{}", x.get_name())
+            let mut poss_pick = round_robin.pop();
+            if poss_pick.is_none() {
+                continue;
             }
+            let mut pick = poss_pick.unwrap();
+            if !pick.is_alive() {
+                continue;
+            }
+            // choose target
+            let mut enemy = targeting::target_random(self.oppo.get_monsters());
+            // dbg!(enemy);
+            if enemy.is_none() {
+                continue;
+            }
+
+            let mut target = enemy.unwrap();
+            // attack target
+            // target.set_health(target.get_health() - pick.get_damage());
+            println!("{} targets {}", pick.get_name(), target.get_name());
+            println!("dealt {} damage to {} ({}/{})", pick.get_damage(), target.get_name(), pick.get_health(), pick.get_max_health());
+            
         }
         println!("");
         // key = all_mons.pop()
