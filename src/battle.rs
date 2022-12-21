@@ -1,10 +1,14 @@
+use std::cell::RefCell;
 use std::collections::BinaryHeap;
+use std::fmt::Display;
+use std::rc::Rc;
 
 use crate::{cardparser, targeting};
 use crate::registry::Registry;
 use crate::battlefactory::BattleFactory;
 use crate::enums::Outcome;
 use crate::deck::Deck;
+use rand::seq::SliceRandom;
 use rand::{thread_rng, rngs::ThreadRng};
 use crate::monster::Monster;
 use crate::roundrobin::RoundRobin;
@@ -22,9 +26,9 @@ impl Battle {
     }
 
     /// all monsters in a round put into a heap for the purporses of deciding which goes first
-    pub fn get_monster_heap(&self) -> BinaryHeap<&Monster> {
-        let mut all_mons: Vec<&Monster> = self.home.get_monsters().iter().collect();
-        all_mons.extend(self.oppo.get_monsters());
+    pub fn get_monster_heap(&self) -> BinaryHeap<Rc<RefCell<Monster>>> {
+        let mut all_mons: Vec<Rc<RefCell<Monster>>> = self.home.get_monsters().iter().map(|x| Rc::clone(x)).collect();
+        all_mons.extend(self.oppo.get_monsters().iter().map(|x| Rc::clone(x)));
         all_mons.into()
     }
 
@@ -38,51 +42,72 @@ impl Battle {
             if poss_pick.is_none() {
                 continue;
             }
-            let mut pick = poss_pick.unwrap();
-            if !pick.is_alive() {
-                continue;
-            }
-            // choose target
-            let mut enemy = targeting::target_random(self.oppo.get_monsters());
-            // dbg!(enemy);
-            if enemy.is_none() {
-                continue;
-            }
-
-            let mut target = enemy.unwrap();
-            // attack target
-            // target.set_health(target.get_health() - pick.get_damage());
-            println!("{} targets {}", pick.get_name(), target.get_name());
-            println!("dealt {} damage to {} ({}/{})", pick.get_damage(), target.get_name(), pick.get_health(), pick.get_max_health());
-            
+            let pick = poss_pick.unwrap();
+            self.turn(&pick);
         }
         println!("");
-        // key = all_mons.pop()
-        // while key.is_dead()
-        //     key = all_mons.pop()
-        // once all_mons is empty... all mons have had a turn
+    }
+
+    pub fn get_enemies(&self, monster_cell: &Rc<RefCell<Monster>>) -> &Deck {
+        if self.home.is_member(monster_cell) {
+            return &self.oppo
+        }
+
+        if self.oppo.is_member(monster_cell) {
+            return &self.home
+        }
+
+        panic!("{:?} not part of this home: {:?} or oppo: {:?}", monster_cell.borrow(), self.home, self.oppo)
+    }
+
+    pub fn choose_enemy(&self, monster_cell: &Rc<RefCell<Monster>>) -> Option<&Rc<RefCell<Monster>>> {
+        let enemies = self.get_enemies(monster_cell);
+        let mut rng = thread_rng();
+        let mut choice = enemies.get_monsters().choose(&mut rng);
+        while let Some(x) = choice {
+            if *x != *monster_cell {
+                break;
+            }
+            choice = enemies.get_monsters().choose(&mut rng);
+        }
+        choice
+    }
+
+    pub fn attack(&self, monster: &Rc<RefCell<Monster>>, target: &Rc<RefCell<Monster>>) {
+        let monster = monster.borrow();
+        let mut target = target.borrow_mut();
+        let damage = monster.get_damage();
+        let health = target.get_health();
+        target.set_health(health - damage);
+        println!("{} attacks {} and deals {} damage leaving it with ({}/{}) health", monster.get_name(), target.get_name(), monster.get_damage(), target.get_health(), target.get_max_health());
+    }
+    
+    /// Represents the turn of monster
+    pub fn turn(&mut self, monster_cell: &Rc<RefCell<Monster>>) {
+        let choice = self.choose_enemy(monster_cell);
+        if choice.is_none() {
+            return
+        }
+        let choice = choice.unwrap();
+
+        self.attack(monster_cell, choice);
     }
 
     pub fn battle(&mut self) -> Outcome {
-        // battle is in Battle class which has instanced decks of instanced monsters
-        // round function
-        // pick next monster function
+        let mut i = 1;
+        while self.home.still_standing() && self.oppo.still_standing() {
+            println!("Round {}:\n\tHome: {}\n\tOppo: {}", i, self.home, self.oppo);
 
-        // let mons1 = self.home.get_highest_speed();  // if tied pick randomly
-        // let mons2 = self.deck.get_highest_speed();
-        // let mons = Random::choice(mons1, mons2);
-
-        // pick target (use strategy)
-        // upon instantiation, monster will get reference to function corresponding to target strategy
-
-        // let enemy = mons.target(&self);
-
-        // attack enemy with monster
-        // might need to inject more context later in case it matters to some cards
-
-        // mons.attack(enemy);
-        
-        Outcome::Win
+            self.round();
+            i += 1;
+        }
+        if self.home.still_standing() {
+            return Outcome::Win
+        }
+        else if self.oppo.still_standing() {
+            return Outcome::Lose
+        }
+        Outcome::Draw
     }
 }
 
@@ -101,59 +126,15 @@ mod tests {
         let monster3 = registry.get("Death Elemental").unwrap();
         
         println!("{:?}\n{:?}\n{:?}\n{:?}\n{:?}", summoner1, summoner2, monster1, monster2, monster3);
-        
-        // let deck1 = Deck::new(summoner1, &[monster1]);
-        // let deck2 = Deck::new(summoner2, &[monster2, monster3]);
-
-        // let battle = Battle::new(deck1, deck2);
-        // methods that compose battle.round()
-
-        // let mons = battle.next_monster();
-        // assert_eq!(mons.name, "Spineback Wolf");
-        // let oppo = battle.cur_monster_target();
-        // assert_eq!(oppo.name, "Death Elemental");
-        // battle.cur_monster_attack();
-        // make it lose health
-        // continue until no monsters are alive
-        // have other tests test buffs
-        // then methods to make all combinations of decks possible
-        // then tournament to rank the deck combinations and voila
-
-    
-
     }
 
     #[test]
     fn test_better_battle() {
-        let registry = Registry::from("assets/cards.csv");
-        // strings to be taken from registry therefore static
-        // let deck1 = DeckProxy::new("Drake of Arnak", "Spineback Wolf");
-        // let deck2 = DeckProxy::new("Contessa L'ament", "Death Elemental");
-
-        // let summoner = CardProxy::new("Drake of Arnak");
-        // let monster = CardProxy::new("Spineback Wolf");
-
-        // let deckInst = deck1.instantiate(registry);
-        // let summInst = summoner.instantiate(registry);
-        // let monsInst = monster.instantiate(registry);
-
-        let bf = BattleFactory::new(&registry);
-        let mut battle_proxy = bf.create(&["Drake of Arnak", "Spineback Wolf"], &["Contessa L'ament", "Death Elemental"]);
+        // test the targeting
+        let reg = Registry::from("assets/cards.csv");
+        let bf = BattleFactory::new(&reg);
+        let mut battle_proxy = bf.create(&["Drake of Arnak", "Spineback Wolf", "Spark Pixies"], &["Contessa L'ament", "Death Elemental", "Child of the Forest"]);
         let mut battle = battle_proxy.instansiate();
-        let mut stuff = 4;
-        // tells you if it is valid
-        // BattleFactory::from("assets/cards.csv")
-        let outcome = battle.battle();
-
-        // let battle = battle_proxy.instantiate();
-        dbg!(&bf);
-        // dbg!(&battle_proxy);
-
-    }
-
-    #[test]
-    fn test_heap_bool() {
-        let mut heap = BinaryHeap::new();  
-        heap.push(5);
+        battle.round();
     }
 }

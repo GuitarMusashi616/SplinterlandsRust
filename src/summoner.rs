@@ -1,6 +1,7 @@
 use crate::carddata::CardData;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct Summoner {
     type_object: Rc<CardData>,
 }

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{registry::{Registry}, enums::Role};
 use crate::deck::Deck;
 use crate::summoner::Summoner;
@@ -22,7 +24,10 @@ impl<'a> DeckProxy<'a> {
         for &card_name in self.cards {
             let card_data = self.registry.get_rc(card_name).unwrap();
             match card_data.role {
-                Role::Monster => {monsters.push(Monster::new(card_data));},
+                Role::Monster => {
+                    let monster = Rc::new(RefCell::new(Monster::new(card_data)));
+                    monsters.push(monster);
+                },
                 Role::Summoner => {summoner = Some(Summoner::new(card_data));},
             }
         }

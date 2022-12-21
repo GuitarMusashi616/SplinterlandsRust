@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 use battlefactory::BattleFactory;
+use battleproxy::BattleProxy;
 use registry::Registry;
 
 mod cardparser;
@@ -39,15 +40,44 @@ fn print_parse() {
     let _ = cardparser::dbg_parse();
 }
 
+fn fixture1() {
+    let registry = Registry::from("assets/cards.csv");
+    let bf = BattleFactory::new(&registry);
+
+    let a = [
+        "Alric Stormbringer",
+        "Elven Defender",
+        "Serpent of Eld",
+        "Ice Pixie",
+        "Enchanted Pixie",
+        "Pirate Captain",
+        "Medusa"
+    ];
+    let b = [
+        "Lyanna Natura",
+        "Unicorn Mustang",
+        "Stone Golem",
+        "Goblin Thief",
+        "Goblin Sorcerer",
+        "Child of the Forest",
+        "Centaur",
+    ];
+
+    let mut bp = bf.create(&a, &b);
+    let mut battle = bp.instansiate();
+    battle.battle();
+}
+
 fn battle() {
     let registry = Registry::from("assets/cards.csv");
     let bf = BattleFactory::new(&registry);
     let mut battle_proxy = bf.create(&["Drake of Arnak", "Spineback Wolf", "Spark Pixies"], &["Contessa L'ament", "Death Elemental", "Child of the Forest"]);
     let mut battle = battle_proxy.instansiate();
-    battle.round();
+    battle.battle();
 }
 
 fn main() {
     // test_reg();
-    battle();   
+    // battle();   
+    fixture1();
 }
