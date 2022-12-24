@@ -1,8 +1,11 @@
 use std::cmp::Ordering;
 
-use super::{monsterkey::MonsterKey, battledata::BattleData};
+use crate::gamedata::{registry::Registry, monster::Monster};
+
+use super::{monsterkey::MonsterKey, battledata::BattleData, roundrobin::RoundRobin};
 
 // A class for bin heap
+#[derive(Debug, Clone)]
 pub struct MonsterSpeed {
     mk: MonsterKey,
     speed: u8,
@@ -10,6 +13,19 @@ pub struct MonsterSpeed {
 
 
 impl MonsterSpeed {
+    pub fn new(mk: MonsterKey, speed: u8) -> Self {
+        Self {
+            mk,
+            speed
+        }
+    }
+
+    pub fn get_vec(bd: &BattleData) -> Vec<Self> {
+        let vec = bd.monsters.iter().map(|(mk, mons)| {
+            Self::new(*mk, mons.get_speed() as u8)
+        }).collect();
+        vec
+    }
 }
 
 impl Ord for MonsterSpeed {

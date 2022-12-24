@@ -13,10 +13,10 @@ pub struct RoundRobin<T: Ord + Clone> {
 
 impl<T: Ord + Clone> RoundRobin<T> {
     /// Fills internal heap with references to monsters in home deck and opponent deck
-    pub fn new(tied: Vec<T>) -> Self {
+    pub fn new(elements: Vec<T>) -> Self {
         Self {
-            tied: tied.clone(),
-            heap: BinaryHeap::from(tied),
+            tied: Vec::new(),
+            heap: BinaryHeap::from(elements),
         }
     }
 
@@ -41,9 +41,9 @@ impl<T: Ord + Clone> RoundRobin<T> {
         loop {
             match self.heap.peek() {
                 Some(cur) => {
-                    if let Some(ref prev) = pick {
-                        if *prev == *cur {
-                            self.tied.push(prev.clone());
+                    if let Some(prev) = pick.take() {
+                        if prev == *cur {
+                            self.tied.push(prev);
                             pick = self.heap.pop();
                             continue;
                         }
@@ -56,7 +56,7 @@ impl<T: Ord + Clone> RoundRobin<T> {
         }
 
         if !self.tied.is_empty() {
-            if let Some(x) = pick {
+            if let Some(x) = pick.take() {
                 self.heap.push(x);
             }
             self.tied.shuffle(&mut thread_rng());
