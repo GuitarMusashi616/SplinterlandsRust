@@ -5,10 +5,10 @@ use crate::gamedata::{registry::Registry, monster::Monster};
 use super::{monsterkey::MonsterKey, battledata::BattleData, roundrobin::RoundRobin};
 
 // A class for bin heap
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct MonsterSpeed {
-    mk: MonsterKey,
-    speed: u8,
+    pub mk: MonsterKey,
+    pub speed: u8,
 }
 
 
