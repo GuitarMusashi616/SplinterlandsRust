@@ -2,7 +2,9 @@ use std::collections::{BinaryHeap, HashMap};
 
 use crate::{battles::battledata::BattleData, gamedata::{summoner::Summoner, monster::Monster, registry::Registry}};
 
-use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed};
+use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed, roundrobin2::RoundRobinIter};
+
+
 
 #[derive(Debug)]
 pub struct Battle<'a> {
@@ -20,11 +22,8 @@ impl<'a> Battle<'a> {
 
     pub fn round(&self) {
         let mks = MonsterSpeed::get_vec(&self.battledata);
-        let mut turns = RoundRobin::new(mks);
-        while !turns.is_empty() {
-            if let Some(mk) = turns.pop() {
-                dbg!(mk);
-            }
+        for mk in RoundRobinIter::new(mks) {
+            dbg!(mk);
         }
     }
 

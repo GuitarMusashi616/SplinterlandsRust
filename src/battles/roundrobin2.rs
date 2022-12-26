@@ -76,6 +76,14 @@ impl RoundRobinIter {
     }
 }
 
+impl Iterator for RoundRobinIter {
+    type Item = MonsterSpeed;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pop()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::battles::monsterkey::MonsterKey;
@@ -95,15 +103,18 @@ mod tests {
             MonsterSpeed::new(MonsterKey::Oppo(3), 4),
         ];
 
-        let mut rr = RoundRobinIter::new(input);
+        let rr = RoundRobinIter::new(input);
         let mut res = Vec::new();
-        while !rr.is_empty() {
-            let val = rr.pop().unwrap();
+        for val in rr {
+            res.push(val.speed);
+        }
+        // while !rr.is_empty() {
+        //     let val = rr.pop().unwrap();
             // if val.speed == 8 {
             //     println!("{:?}", val.mk)
             // }
-            res.push(val.speed);
-        }
+            // res.push(val.speed);
+        // }
 
         let exp = vec![8,8,8,7,4,3,2,2];
         assert_eq!(res, exp);
