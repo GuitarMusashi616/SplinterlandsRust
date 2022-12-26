@@ -19,11 +19,17 @@ impl<'a> Battle<'a> {
             battledata
         }
     }
+    
+    pub fn target_random(&self) {
+        
+        
+    }
 
     pub fn round(&self) {
         let mks = MonsterSpeed::get_vec(&self.battledata);
         for mk in RoundRobinIter::new(mks) {
-            dbg!(mk);
+            let enemy = self.battledata.get_random_alive_enemy(&mk.mk);
+            println!("{:?} targeted by {:?}", enemy, mk.mk);
         }
     }
 

@@ -17,6 +17,6 @@ fn main() {
     let battle = Battle::new(&registry, home, oppo);
     battle.round();
 
-    dbg!(battle);
+    // dbg!(battle);
 
 }
