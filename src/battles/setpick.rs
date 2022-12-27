@@ -2,7 +2,7 @@ use std::collections::{HashSet, HashMap};
 
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 
-use super::monsterkey::MonsterKey;
+use super::{monsterkey::MonsterKey, battledata::BattleData};
 
 /// Pick from a set like it's a vec but with the performance of a set
 /// Must keep track of positions like a vec
@@ -62,6 +62,27 @@ impl SetPick {
     pub fn index(&self, i: usize) -> MonsterKey {
         self.keys[i]
     }
+
+    pub fn to_monster_string(&self, bd: &BattleData) -> String {
+        let mons: Vec<_> = self.keys.iter().map(|x| bd.get(x).unwrap()).collect();
+        let strings: Vec<_> = mons.iter().map(|x| {
+            let mut string = format!("{} ({}/{})",
+                x.get_name(),
+                x.get_health(),
+                x.get_max_health(),
+            );
+            
+            if x.get_armor() > 0 {
+                string.push_str(&format!(" [{}]", x.get_armor()));
+            }
+            string
+        }).collect();
+        let mut res = strings.join(", ");
+        res.insert_str(0, "[ ");
+        res.push_str(" ]");
+        res
+    }
+
 }
 
 #[cfg(test)]

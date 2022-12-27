@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::rc::Rc;
 use std::cmp::Ordering;
 
@@ -77,6 +78,16 @@ impl<'a> Monster<'a> {
         if self.armor < 0 {
             self.armor = 0;
         }
+    }
+}
+
+impl<'a> Display for Monster<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut string = format!("{} ({}/{})", self.get_name(), self.get_health(), self.get_max_health());
+        if self.get_armor() > 0 {
+            string.push_str(&format!(" [{}]", self.get_armor()));
+        }
+        write!(f, "{}", string)
     }
 }
 

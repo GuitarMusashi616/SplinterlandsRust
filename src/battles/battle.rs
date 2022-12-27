@@ -40,7 +40,10 @@ impl<'a> Battle<'a> {
     pub fn game(&mut self) {
         let mut i = 1;
         while !self.is_over() {
-            println!("Round {}:\n{:?}\n{:?}\n\n", i, self.battledata.home_alive, self.battledata.oppo_alive);
+            println!("\nRound {}:\n{:?}\n{:?}\n", i, 
+                self.battledata.home_alive.to_monster_string(&self.battledata),
+                self.battledata.oppo_alive.to_monster_string(&self.battledata)
+            );
             self.round();
             i += 1;
         }
