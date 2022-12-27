@@ -2,7 +2,7 @@ use std::collections::{BinaryHeap, HashMap};
 
 use crate::{battles::{battledata::BattleData, targeting, attacking}, gamedata::{summoner::Summoner, monster::Monster, registry::Registry}};
 
-use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed, roundrobin2::RoundRobinIter, monsterkey::MonsterKey};
+use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed, roundrobiniter::RoundRobinIter, monsterkey::MonsterKey};
 
 
 
@@ -38,8 +38,11 @@ impl<'a> Battle<'a> {
     }
 
     pub fn game(&mut self) {
+        let mut i = 1;
         while !self.is_over() {
+            println!("Round {}:\n{:?}\n{:?}\n\n", i, self.battledata.home_alive, self.battledata.oppo_alive);
             self.round();
+            i += 1;
         }
     }
     
@@ -62,7 +65,7 @@ impl<'a> Battle<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{gamedata::registry::Registry, battles::{monsterkey::MonsterKey, attacking}};
+    use crate::{gamedata::registry::Registry, battles::{monsterkey::MonsterKey, attacking, roundrobiniter::RoundRobinIter, monsterspeed::MonsterSpeed}};
 
     use super::Battle;
     use crate::battles::targeting;
@@ -191,5 +194,77 @@ mod tests {
         let target = battle.battledata.get(tk).unwrap();
         assert_eq!(target.get_health(), 5);
         assert_eq!(target.get_armor(), 2);
+    }
+
+    #[test]
+    fn test_skip_dead() {
+        let reg = Registry::from("assets/cards.csv");
+
+        let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
+        
+        let mut battle = Battle::new(&reg, home, oppo);
+        let dmg = 1000;
+        
+        for i in 0..=2 {
+            let hk = MonsterKey::Home(i);
+            let ok = MonsterKey::Oppo(i);
+            battle.battledata.deal_true_damage(&hk, dmg);
+            battle.battledata.deal_true_damage(&ok, dmg);
+        }
+
+        let rem: Vec<_> = RoundRobinIter::new(MonsterSpeed::get_vec(&battle.battledata)).collect();
+        assert_eq!(rem.len(), 1);
+        let guy = battle.battledata.monsters.get(&rem[0].mk).unwrap();
+        assert_eq!(guy.get_name(), "Goblin Fireballer");
+    }
+
+    #[test]
+    fn test_dont_target_dead() {
+        let reg = Registry::from("assets/cards.csv");
+
+        let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
+
+        let mut battle = Battle::new(&reg, home, oppo);
+
+        battle.battledata.deal_true_damage(&MonsterKey::Home(0), 1000);
+        battle.battledata.deal_true_damage(&MonsterKey::Home(2), 1000);
+        battle.battledata.deal_true_damage(&MonsterKey::Oppo(1), 1000);
+
+        let ms_vec = MonsterSpeed::get_vec(&battle.battledata);
+        for ms in RoundRobinIter::new(ms_vec) {
+            let tk = targeting::target_for(&battle.battledata, &ms.mk);
+            if let Some(tk) = tk {
+                assert_ne!(ms.mk, tk);  // no self targeting
+                let target = battle.battledata.get(&tk).unwrap();
+                assert!(target.get_health() > 0);  // no dead targets
+            }
+        }
+    }
+
+    #[test]
+    fn test_pos_after_death() {
+        let reg = Registry::from("assets/cards.csv");
+
+        let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
+
+        let mut battle = Battle::new(&reg, home, oppo);
+
+        battle.battledata.deal_true_damage(&MonsterKey::Home(0), 1000);
+        battle.battledata.deal_true_damage(&MonsterKey::Home(2), 1000);
+        battle.battledata.deal_true_damage(&MonsterKey::Oppo(1), 1000);
+
+        let troll = &MonsterKey::Home(1);
+        let goblin = &MonsterKey::Home(3);
+        let pixie = &MonsterKey::Oppo(2);
+
+        // println!("home rem: {:?}", battle.battledata.home_alive);
+        // println!("oppo rem: {:?}", battle.battledata.oppo_alive);
+
+        assert_eq!(battle.battledata.get_pos(troll).unwrap(), 0);
+        assert_eq!(battle.battledata.get_pos(goblin).unwrap(), 1);
+        assert_eq!(battle.battledata.get_pos(pixie).unwrap(), 1);
     }
 }

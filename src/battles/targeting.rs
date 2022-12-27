@@ -20,14 +20,15 @@ pub fn target_for_melee(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> 
         return None;
     }
     let monster = bd.get(mk).expect("mk is not in battle");
-    let in_1st_pos = monster.get_pos() == 0;
-    let in_2nd_pos_with_reach = monster.get_pos() == 1 && monster.has_ability(Ability::Reach);
+    let mk_pos =  bd.get_pos(mk).expect("mk is not alive");
+    let in_1st_pos = mk_pos == 0;
+    let in_2nd_pos_with_reach = mk_pos == 1 && monster.has_ability(Ability::Reach);
     if !in_1st_pos && !in_2nd_pos_with_reach {
         return None;
     }
     match mk {
-        MonsterKey::Home(_) => Some(bd.oppo_alive[0]),
-        MonsterKey::Oppo(_) => Some(bd.home_alive[0])
+        MonsterKey::Home(_) => Some(bd.oppo_alive.index(0)),
+        MonsterKey::Oppo(_) => Some(bd.home_alive.index(0))
     }
 }
 
@@ -36,7 +37,7 @@ pub fn target_for_ranged(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey>
         return None;
     }
     let monster = bd.get(mk).expect("mk is not in battle");
-    let in_1st_pos = monster.get_pos() == 0;
+    let in_1st_pos = bd.get_pos(mk).expect("mk is not alive") == 0;
     if in_1st_pos {
         return None;
     }

@@ -4,7 +4,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::gamedata::{monster::Monster, summoner::Summoner, registry::Registry};
 
-use super::monsterkey::MonsterKey;
+use super::{monsterkey::MonsterKey, setpick::SetPick};
 
 /// Wraps database related to battle
 #[derive(Debug)]
@@ -12,8 +12,8 @@ pub struct BattleData<'a> {
     pub home_summ: Summoner<'a>,
     pub oppo_summ: Summoner<'a>,
     pub monsters: HashMap<MonsterKey, Monster<'a>>,
-    pub home_alive: Vec<MonsterKey>,
-    pub oppo_alive: Vec<MonsterKey>,
+    pub home_alive: SetPick,
+    pub oppo_alive: SetPick,
 }
 
 impl<'a> BattleData<'a> {
@@ -26,8 +26,8 @@ impl<'a> BattleData<'a> {
             home_summ,
             oppo_summ,
             monsters,
-            home_alive,
-            oppo_alive,
+            home_alive: SetPick::new(&home_alive),
+            oppo_alive: SetPick::new(&oppo_alive),
         }
     }
 
@@ -35,10 +35,10 @@ impl<'a> BattleData<'a> {
         let mut home_vec = Vec::new();
         let mut oppo_vec = Vec::new();
         for mons in home {
-            home_vec.push(MonsterKey::Home(mons.get_pos()));
+            home_vec.push(MonsterKey::Home(mons.get_key()));
         }
         for mons in oppo {
-            oppo_vec.push(MonsterKey::Oppo(mons.get_pos()));
+            oppo_vec.push(MonsterKey::Oppo(mons.get_key()));
         }
         (home_vec, oppo_vec)
     }
@@ -60,11 +60,11 @@ impl<'a> BattleData<'a> {
     pub fn to_map(home: Vec<Monster<'a>>, oppo: Vec<Monster<'a>>) -> HashMap<MonsterKey, Monster<'a>> {
         let mut map = HashMap::new();
         for mons in home.into_iter() {
-            let mk = MonsterKey::Home(mons.get_pos() as u8);
+            let mk = MonsterKey::Home(mons.get_key() as u8);
             map.insert(mk, mons);
         }
         for mons in oppo.into_iter() {
-            let mk = MonsterKey::Oppo(mons.get_pos() as u8);
+            let mk = MonsterKey::Oppo(mons.get_key() as u8);
             map.insert(mk, mons);
         }
         map
@@ -86,6 +86,36 @@ impl<'a> BattleData<'a> {
         self.monsters.get_mut(mk)
     }
 
+    pub fn get_pos(&self, mk: &MonsterKey) -> Option<u8> {
+        if self.home_alive.contains(mk) {
+            return self.home_alive.get_pos(mk).map(|x| *x as u8);
+        }
+
+        if self.oppo_alive.contains(mk) {
+            return self.oppo_alive.get_pos(mk).map(|x| *x as u8);
+        }
+
+        None
+    }
+
+    pub fn handle_death(&mut self, mk: &MonsterKey) {
+        let monster = self.get(mk).expect("mk is not part of battle");
+        // remove from home_alive / oppo_alive
+        if monster.get_health() > 0 {
+            return
+        }
+
+        if self.home_alive.contains(mk) {
+            self.home_alive.remove(mk);
+            return;
+        }
+
+        if self.oppo_alive.contains(mk) {
+            self.oppo_alive.remove(mk);
+            return;
+        }
+    }
+
     pub fn deal_damage(&mut self, mk: &MonsterKey, dmg: i32) {
         let monster = self.monsters.get_mut(mk).expect("mk is not part of battle");
         let m_armor = monster.get_armor();
@@ -95,12 +125,14 @@ impl<'a> BattleData<'a> {
         }
         let m_health = monster.get_health();
         monster.set_health(m_health - dmg);
+        self.handle_death(mk)
     }
 
     pub fn deal_true_damage(&mut self, mk: &MonsterKey, dmg: i32) {
         let monster = self.monsters.get_mut(mk).expect("mk is not part of battle");
         let m_health = monster.get_health();
         monster.set_health(m_health - dmg);
+        self.handle_death(mk)
     }
 
     /// Register team-wide buffs

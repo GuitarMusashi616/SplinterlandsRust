@@ -9,16 +9,16 @@ pub struct Monster<'a> {
     type_object: &'a CardData,
     health: i32,
     armor: i32,
-    pos: u8,
+    key: u8,
 }
 
 impl<'a> Monster<'a> {
-    pub fn new(type_object: &'a CardData, pos: u8) -> Self {
+    pub fn new(type_object: &'a CardData, key: u8) -> Self {
         Self {
             type_object,
             health: type_object.health,
             armor: type_object.armor,
-            pos,
+            key,
         }
     }
     pub fn get_health(&self) -> i32 {
@@ -51,11 +51,11 @@ impl<'a> Monster<'a> {
     pub fn get_name(&self) -> &str {
         &self.type_object.name
     }
-    
-    pub fn get_pos(&self) -> u8 {
-        self.pos
-    }
 
+    pub fn get_key(&self) -> u8 {
+        self.key
+    }
+    
     pub fn get_attack_type(&self) -> &AttackType {
         &self.type_object.attack_type
     }
