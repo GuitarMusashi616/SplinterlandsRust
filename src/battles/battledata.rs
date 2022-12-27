@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::gamedata::{monster::Monster, summoner::Summoner, registry::Registry};
+use crate::{gamedata::{monster::Monster, summoner::Summoner, registry::Registry}, cardparse::enums::{Ability, AttackType}};
 
 use super::{monsterkey::MonsterKey, setpick::SetPick};
 
@@ -70,20 +70,16 @@ impl<'a> BattleData<'a> {
         map
     }
 
-    pub fn get_random_alive_enemy(&self, mk: &MonsterKey) -> Option<&MonsterKey> {
-        let mut rng = thread_rng();
-        match mk {
-            MonsterKey::Home(_) => self.oppo_alive.choose(&mut rng),
-            MonsterKey::Oppo(_) => self.home_alive.choose(&mut rng),
-        }
-    }
+    // pub fn get_random_alive_enemy(&self, mk: &MonsterKey) -> Option<&MonsterKey> {
+    //     let mut rng = thread_rng();
+    //     match mk {
+    //         MonsterKey::Home(_) => self.oppo_alive.choose(&mut rng),
+    //         MonsterKey::Oppo(_) => self.home_alive.choose(&mut rng),
+    //     }
+    // }
 
     pub fn get(&self, mk: &MonsterKey) -> Option<&Monster<'a>> {
         self.monsters.get(mk)
-    }
-
-    pub fn get_mut(&mut self, mk: &MonsterKey) -> Option<&mut Monster<'a>> {
-        self.monsters.get_mut(mk)
     }
 
     pub fn get_pos(&self, mk: &MonsterKey) -> Option<u8> {
@@ -135,15 +131,97 @@ impl<'a> BattleData<'a> {
         self.handle_death(mk)
     }
 
-    /// Register team-wide buffs
-    pub fn register_team_buffs(&mut self, mk: &MonsterKey) {
-        
+    pub fn apply_summ_buffs(&mut self, mk: &MonsterKey, buffs: &[Ability]) {
+        for buff in buffs {
+            self.apply_summ_buff(mk, buff);
+        }
     }
+ 
+    pub fn apply_summ_buff(&mut self, mk: &MonsterKey, buff: &Ability) {
+        let monster = self.monsters.get_mut(mk).unwrap();
+
+        match buff {
+            &Ability::Health(i) => {
+                let health = monster.get_health();
+                monster.set_health(health + Ability::extent_of(i));
+            },
+            &Ability::Armor(i) => {
+                let armor = monster.get_armor();
+                monster.set_armor(armor + Ability::extent_of(i));
+            },
+            &Ability::Speed(i) => {
+                let speed = monster.get_speed();
+                monster.set_speed(speed + Ability::extent_of(i));
+            },
+            &Ability::Melee(i) => {
+                if monster.get_attack_type() != AttackType::Melee {
+                    return;
+                }
+                let damage = monster.get_damage();
+                monster.set_damage(damage + Ability::extent_of(i));
+            },
+            &Ability::Ranged(i) => {
+                if monster.get_attack_type() != AttackType::Ranged {
+                    return;
+                }
+                let damage = monster.get_damage();
+                monster.set_damage(damage + Ability::extent_of(i));
+            },
+            &Ability::Magic(i) => {
+                if monster.get_attack_type() != AttackType::Magic {
+                    return;
+                }
+                let damage = monster.get_damage();
+                monster.set_damage(damage + Ability::extent_of(i));
+            },
+            _ => (),
+        }
+    }
+
+    /// Register only summoner buffs of health, armor, speed, melee, ranged, magic both + and -
+    pub fn register_all_team_buffs(&mut self) {
+        let home_alive: Vec<MonsterKey> = self.home_alive.iter().map(|x| x.clone()).collect();
+        let oppo_alive: Vec<MonsterKey> = self.oppo_alive.iter().map(|x| x.clone()).collect();
+
+        let home_buffs = self.home_summ.get_buffs();
+        let home_debuffs = self.oppo_summ.get_debuffs();
+        let oppo_buffs = self.oppo_summ.get_buffs();
+        let oppo_debuffs = self.home_summ.get_debuffs();
+
+        self.register_buffs_on_team(&home_alive, &home_buffs);
+        self.register_buffs_on_team(&oppo_alive, &oppo_buffs);
+        self.register_buffs_on_team(&home_alive, &home_debuffs);
+        self.register_buffs_on_team(&oppo_alive, &oppo_debuffs);
+
+        self.set_minimum_monster_values();
+    }
+
+    pub fn register_buffs_on_team(&mut self, alive: &[MonsterKey], abilities: &[Ability]) {
+        alive.iter().for_each(|mk| {
+            self.apply_summ_buffs(mk, abilities);
+        })
+    }
+
+    pub fn set_minimum_monster_values(&mut self) {
+        for monster in self.monsters.values_mut() {
+            if monster.get_damage() <= 0 && monster.get_default_damage() > 0 {
+                monster.set_damage(1);
+            }
+            if monster.get_health() <= 0 && monster.get_default_health() > 0 {
+                monster.set_health(1);
+            }
+            if monster.get_speed() <= 0 && monster.get_default_speed() > 0 {
+                monster.set_speed(1);
+            }
+        }
+    }
+
 
     /// Register individual buffs
     pub fn register_buffs(&mut self, mk: &MonsterKey) {
 
     }
+
 }
 
 #[cfg(test)]

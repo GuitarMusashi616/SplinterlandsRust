@@ -14,7 +14,8 @@ pub struct Battle<'a> {
 
 impl<'a> Battle<'a> {
     pub fn new(reg: &'a Registry, home: Vec<&'a str>, oppo: Vec<&'a str>) -> Self {
-        let battledata = BattleData::new(reg, home, oppo);
+        let mut battledata = BattleData::new(reg, home, oppo);
+        battledata.register_all_team_buffs();
         Self {
             battledata
         }
@@ -270,4 +271,52 @@ mod tests {
         assert_eq!(battle.battledata.get_pos(goblin).unwrap(), 1);
         assert_eq!(battle.battledata.get_pos(pixie).unwrap(), 1);
     }
+
+    #[test]
+    fn test_summoner_buff_speed_magic() {
+        let reg = Registry::from("assets/cards.csv");
+        let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
+        let oppo = vec!["Alric Stormbringer", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
+        let battle = Battle::new(&reg, home, oppo);
+        
+        let troll = battle.battledata.get(&MonsterKey::Home(1)).unwrap();
+        let kobold = battle.battledata.get(&MonsterKey::Home(2)).unwrap();
+        let pixie = battle.battledata.get(&MonsterKey::Oppo(2)).unwrap();
+        
+        assert_eq!(troll.get_speed(), troll.get_default_speed() + 1);
+        assert_eq!(kobold.get_speed(), kobold.get_default_speed() + 1);
+        assert_eq!(pixie.get_damage(), pixie.get_default_damage() + 1);
+    }
+
+    #[test]
+    fn test_summoner_debuffs() {
+        let reg = Registry::from("assets/cards.csv");
+        let home = vec!["Wizard of Eastwood", "Goblin Sorcerer"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
+        let battle = Battle::new(&reg, home, oppo);
+
+        let goblin = battle.battledata.get(&MonsterKey::Home(0)).unwrap();
+        let serpent = battle.battledata.get(&MonsterKey::Oppo(0)).unwrap();
+        let pixie = battle.battledata.get(&MonsterKey::Oppo(2)).unwrap();
+
+        assert_eq!(goblin.get_damage(), 1);
+        assert_eq!(serpent.get_armor(), 0);
+        assert_eq!(pixie.get_armor(), 0);
+    }
+
+    #[test]
+    fn test_summoner_buff_and_debuff_order_shouldnt_matter() {
+
+    }
+
+    #[test]
+    fn test_sneak_opportunity_snipe() {
+
+    }
+
+    #[test]
+    fn test_monster_buff_allies_and_removal_on_death() {
+
+    }
+
 }

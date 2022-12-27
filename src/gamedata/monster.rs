@@ -8,20 +8,29 @@ use crate::cardparse::enums::{AttackType, Ability};
 #[derive(Debug)]
 pub struct Monster<'a> {
     type_object: &'a CardData,
+    key: u8,
+    max_health: i32,
     health: i32,
     armor: i32,
-    key: u8,
+    damage: i32,
+    speed: i32,
+    buffs_provided: Vec<Ability>,
 }
 
 impl<'a> Monster<'a> {
     pub fn new(type_object: &'a CardData, key: u8) -> Self {
         Self {
             type_object,
+            key,
+            max_health: type_object.health,
             health: type_object.health,
             armor: type_object.armor,
-            key,
+            damage: type_object.damage,
+            speed: type_object.speed,
+            buffs_provided: Vec::new(),
         }
     }
+
     pub fn get_health(&self) -> i32 {
         self.health
     }
@@ -34,6 +43,10 @@ impl<'a> Monster<'a> {
     }
 
     pub fn get_max_health(&self) -> i32 {
+        self.max_health
+    }
+
+    pub fn get_default_health(&self) -> i32 {
         self.type_object.health
     }
 
@@ -42,11 +55,27 @@ impl<'a> Monster<'a> {
     }
 
     pub fn get_speed(&self) -> i32 {
+        self.speed
+    }
+
+    pub fn get_default_speed(&self) -> i32 {
         self.type_object.speed
     }
 
+    pub fn set_speed(&mut self, speed: i32) {
+        self.speed = speed;
+    }
+
     pub fn get_damage(&self) -> i32 {
+        self.damage
+    }
+
+    pub fn get_default_damage(&self) -> i32 {
         self.type_object.damage
+    }
+
+    pub fn set_damage(&mut self, damage: i32) {
+        self.damage = damage;
     }
 
     pub fn get_name(&self) -> &str {
@@ -57,8 +86,8 @@ impl<'a> Monster<'a> {
         self.key
     }
     
-    pub fn get_attack_type(&self) -> &AttackType {
-        &self.type_object.attack_type
+    pub fn get_attack_type(&self) -> AttackType {
+        self.type_object.attack_type
     }
 
     pub fn has_ability(&self, ability: Ability) -> bool {
@@ -69,7 +98,7 @@ impl<'a> Monster<'a> {
         self.armor
     }
 
-    pub fn get_max_armor(&self) -> i32 {
+    pub fn get_default_armor(&self) -> i32 {
         self.type_object.armor
     }
 

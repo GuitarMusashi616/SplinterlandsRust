@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 
 use gamedata::registry::Registry;
 
-use crate::battles::battle::Battle;
+use crate::{battles::battle::Battle, cardparse::enums::Ability};
 
 
 mod gamedata;
@@ -13,13 +13,19 @@ mod cardparse;
 
 pub fn unique_abilities() {
     let registry = Registry::from("assets/cards.csv");
-    let mut all_abilities = HashSet::new();
+    let mut all_abilities: HashMap<Ability, i32> = HashMap::new();
     for card in registry.map.values() {
         for ability in &card.abilities {
-            all_abilities.insert(ability);
+            let ability_count = all_abilities.get(ability).copied().unwrap_or_default();
+            all_abilities.insert(*ability, ability_count + 1);
         }
     }
-    println!("{:?}", all_abilities);
+    let mut as_vec: Vec<_> = all_abilities.into_iter().collect();
+    as_vec.sort_by(|a, b| b.1.cmp(&a.1));
+    // println!("{:?}", all_abilities);
+    as_vec.into_iter().for_each(|(ability, count)| {
+        println!("{:?}: {}", ability, count);
+    });
 }
 
 pub fn example_battle() {
@@ -32,5 +38,6 @@ pub fn example_battle() {
     battle.game();
 }
 fn main() {
-    example_battle();
+    // example_battle();
+    unique_abilities();
 }

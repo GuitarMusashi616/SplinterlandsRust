@@ -1,6 +1,8 @@
-use std::collections::{HashSet, HashMap};
+use std::{collections::{HashSet, HashMap}, slice::Iter, vec::IntoIter};
 
 use rand::{rngs::ThreadRng, seq::SliceRandom};
+
+use crate::cardparse::enums::Ability;
 
 use super::{monsterkey::MonsterKey, battledata::BattleData};
 
@@ -61,6 +63,10 @@ impl SetPick {
 
     pub fn index(&self, i: usize) -> MonsterKey {
         self.keys[i]
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &MonsterKey> {
+        self.keys.iter()
     }
 
     pub fn to_monster_string(&self, bd: &BattleData) -> String {

@@ -1,6 +1,6 @@
-use std::{panic, collections::HashSet};
+use std::{panic, collections::HashSet, fmt::Display};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Role {
     Summoner,
     Monster,
@@ -16,7 +16,7 @@ impl From<&str> for Role {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Element {
     Fire,
     Water,
@@ -42,7 +42,7 @@ impl From<&str> for Element {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum AttackType {
     None,
     Melee,
@@ -62,7 +62,7 @@ impl From<&str> for AttackType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Ability {
     Melee(i8),
     Ranged(i8),
@@ -141,6 +141,38 @@ impl Ability {
             set.insert(string.into());
         }
         set
+    }
+
+    pub fn extent_of(i: i8) -> i32 {
+        if i < 0 {
+            i as i32
+        } else {
+            i as i32
+        }
+    }
+
+    pub fn is_buff(&self) -> bool {
+        match self {
+            &Ability::Health(i) => i >= 0,
+            &Ability::Armor(i) => i >= 0,
+            &Ability::Speed(i) => i >= 0,
+            &Ability::Melee(i) => i >= 0,
+            &Ability::Ranged(i) => i >= 0,
+            &Ability::Magic(i) => i >= 0,
+            _ => false,
+        }
+    }
+
+    pub fn is_debuff(&self) -> bool {
+        match self {
+            &Ability::Health(i) => i < 0,
+            &Ability::Armor(i) => i < 0,
+            &Ability::Speed(i) => i < 0,
+            &Ability::Melee(i) => i < 0,
+            &Ability::Ranged(i) => i < 0,
+            &Ability::Magic(i) => i < 0,
+            _ => false,
+        }
     }
 }
 

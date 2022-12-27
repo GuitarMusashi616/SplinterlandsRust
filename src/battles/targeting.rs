@@ -8,10 +8,10 @@ pub fn target_for(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
     // path of melee
     let monster = bd.get(mk).expect("mk not in battledata");
     match monster.get_attack_type() {
-        &AttackType::Melee => target_for_melee(bd, mk),
-        &AttackType::Ranged => target_for_ranged(bd, mk),
-        &AttackType::Magic => target_for_magic(bd, mk),
-        &AttackType::None => None,
+        AttackType::Melee => target_for_melee(bd, mk),
+        AttackType::Ranged => target_for_ranged(bd, mk),
+        AttackType::Magic => target_for_magic(bd, mk),
+        AttackType::None => None,
     }
 }
 
@@ -20,6 +20,9 @@ pub fn target_for_melee(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> 
         return None;
     }
     let monster = bd.get(mk).expect("mk is not in battle");
+    if !monster.is_alive() {
+        return None;
+    }
     let mk_pos =  bd.get_pos(mk).expect("mk is not alive");
     let in_1st_pos = mk_pos == 0;
     let in_2nd_pos_with_reach = mk_pos == 1 && monster.has_ability(Ability::Reach);
