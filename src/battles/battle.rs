@@ -306,7 +306,16 @@ mod tests {
 
     #[test]
     fn test_summoner_buff_and_debuff_order_shouldnt_matter() {
+        let reg = Registry::from("assets/cards.csv");
+        let home = vec!["Wizard of Eastwood", "Goblin Sorcerer"];
+        let oppo = vec!["Tyrus Paladium", "Elven Defender", "Crystal Jaguar", "Peacebringer"];
+        let battle = Battle::new(&reg, home, oppo);
 
+        let elf = battle.battledata.get(&MonsterKey::Oppo(0)).unwrap();
+        let jag = battle.battledata.get(&MonsterKey::Oppo(1)).unwrap();
+
+        assert_eq!(elf.get_armor(), 2);
+        assert_eq!(jag.get_armor(), 0);
     }
 
     #[test]
