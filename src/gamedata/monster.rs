@@ -2,6 +2,7 @@ use std::rc::Rc;
 use std::cmp::Ordering;
 
 use crate::cardparse::carddata::CardData;
+use crate::cardparse::enums::{AttackType, Ability};
 
 #[derive(Debug)]
 pub struct Monster<'a> {
@@ -20,13 +21,15 @@ impl<'a> Monster<'a> {
             pos,
         }
     }
-
     pub fn get_health(&self) -> i32 {
         self.health
     }
 
     pub fn set_health(&mut self, val: i32) {
         self.health = val;
+        if self.health < 0 {
+            self.health = 0
+        }
     }
 
     pub fn get_max_health(&self) -> i32 {
@@ -51,6 +54,29 @@ impl<'a> Monster<'a> {
     
     pub fn get_pos(&self) -> u8 {
         self.pos
+    }
+
+    pub fn get_attack_type(&self) -> &AttackType {
+        &self.type_object.attack_type
+    }
+
+    pub fn has_ability(&self, ability: Ability) -> bool {
+        self.type_object.abilities.contains(&ability)
+    }
+
+    pub fn get_armor(&self) -> i32 {
+        self.armor
+    }
+
+    pub fn get_max_armor(&self) -> i32 {
+        self.type_object.armor
+    }
+
+    pub fn set_armor(&mut self, armor: i32) {
+        self.armor = armor;
+        if self.armor < 0 {
+            self.armor = 0;
+        }
     }
 }
 

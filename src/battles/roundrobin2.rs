@@ -17,7 +17,7 @@ impl RoundRobinIter {
         let mut map = Self::make_map(&values);
         Self::shuffle_map(&mut map);
         let mut heap = Self::make_heap(&map);
-        println!("map: {:?}\nheap: {:?}", map, heap);
+        // println!("map: {:?}\nheap: {:?}", map, heap);
         Self {
             heap,
             dict: map,
@@ -61,14 +61,14 @@ impl RoundRobinIter {
             panic!("heap error, contains {:?} not in {:?}", key, self.dict);
         }
         let arr = self.dict.get_mut(key).unwrap();
-        println!("{}: {:?}", key, arr);
+        // println!("{}: {:?}", key, arr);
         if arr.is_empty() {
             panic!("heap key corresponds to empty list");
             // return None;
         }
 
         let res = arr.pop().unwrap();
-        println!("res: {:?}", res);
+        // println!("res: {:?}", res);
         if arr.is_empty() {
             self.heap.pop();
         }

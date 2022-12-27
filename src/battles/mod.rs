@@ -4,3 +4,5 @@ pub mod roundrobin;
 pub mod roundrobin2;
 pub mod monsterkey;
 pub mod monsterspeed;
+pub mod targeting;
+pub mod attacking;

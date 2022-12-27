@@ -21,7 +21,10 @@ impl MonsterSpeed {
     }
 
     pub fn get_vec(bd: &BattleData) -> Vec<Self> {
-        let vec = bd.monsters.iter().map(|(mk, mons)| {
+        let vec = bd.monsters
+        .iter()
+        .filter(|(mk, mons)| mons.get_health() > 0)
+        .map(|(mk, mons)| {
             Self::new(*mk, mons.get_speed() as u8)
         }).collect();
         vec

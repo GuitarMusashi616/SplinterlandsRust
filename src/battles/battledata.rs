@@ -78,10 +78,40 @@ impl<'a> BattleData<'a> {
         }
     }
 
-    // pub fn get_random_rem_enemy(mk: MonsterKey) -> Option<&HashSet<MonsterKey>> {
-    //     if 
-    // }
+    pub fn get(&self, mk: &MonsterKey) -> Option<&Monster<'a>> {
+        self.monsters.get(mk)
+    }
 
+    pub fn get_mut(&mut self, mk: &MonsterKey) -> Option<&mut Monster<'a>> {
+        self.monsters.get_mut(mk)
+    }
+
+    pub fn deal_damage(&mut self, mk: &MonsterKey, dmg: i32) {
+        let monster = self.monsters.get_mut(mk).expect("mk is not part of battle");
+        let m_armor = monster.get_armor();
+        if m_armor > 0 {
+            monster.set_armor(m_armor - dmg);
+            return
+        }
+        let m_health = monster.get_health();
+        monster.set_health(m_health - dmg);
+    }
+
+    pub fn deal_true_damage(&mut self, mk: &MonsterKey, dmg: i32) {
+        let monster = self.monsters.get_mut(mk).expect("mk is not part of battle");
+        let m_health = monster.get_health();
+        monster.set_health(m_health - dmg);
+    }
+
+    /// Register team-wide buffs
+    pub fn register_team_buffs(&mut self, mk: &MonsterKey) {
+        
+    }
+
+    /// Register individual buffs
+    pub fn register_buffs(&mut self, mk: &MonsterKey) {
+
+    }
 }
 
 #[cfg(test)]
