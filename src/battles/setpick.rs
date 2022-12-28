@@ -1,6 +1,6 @@
 use std::{collections::{HashSet, HashMap}, slice::Iter, vec::IntoIter};
 
-use rand::{rngs::ThreadRng, seq::SliceRandom};
+use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 
 use crate::cardparse::enums::Ability;
 
@@ -26,6 +26,10 @@ impl SetPick {
             keys,
             map
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.keys.len()
     }
 
     pub fn contains(&self, mk: &MonsterKey) -> bool {
@@ -67,6 +71,23 @@ impl SetPick {
 
     pub fn iter(&self) -> impl Iterator<Item = &MonsterKey> {
         self.keys.iter()
+    }
+
+    pub fn least_health(&self, bd: &BattleData) -> Option<MonsterKey> {
+        self.keys.iter().fold((i32::MAX, None), |mut acc, elem| {
+            let mons = bd.get(elem).unwrap();
+            let health = mons.get_health();
+            if health < acc.0 {
+                println!("new smallest health: {}", mons);
+                acc = (health, Some(*elem));
+            }
+            acc
+        }).1
+    }
+
+    pub fn random_from_filter(&self, f: impl Fn(&MonsterKey) -> bool) -> Option<MonsterKey> {
+        let filtered: Vec<_> = self.keys.iter().filter(|x| f(x)).collect();
+        filtered.choose(&mut thread_rng()).copied().copied()
     }
 
     pub fn to_monster_string(&self, bd: &BattleData) -> String {

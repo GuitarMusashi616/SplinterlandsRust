@@ -12,7 +12,7 @@ mod battles;
 mod cardparse;
 
 pub fn unique_abilities() {
-    let registry = Registry::from("assets/cards.csv");
+    let registry = Registry::from("assets/new_cards.csv");
     let mut all_abilities: HashMap<Ability, i32> = HashMap::new();
     for card in registry.map.values() {
         for ability in &card.abilities {
@@ -37,7 +37,16 @@ pub fn example_battle() {
     let mut battle = Battle::new(&registry, home, oppo);
     battle.game();
 }
+
+pub fn example_battle_2() {
+    let reg = Registry::from("assets/new_cards.csv");
+    let home = vec!["Tarsa", "Living Lava", "Magma Troll", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
+    let oppo = vec!["Kelya Frendul", "Serpent of Eld", "Feasting Seaweed", "Sniping Narwhal", "Ice Pixie"];
+    let mut battle = Battle::new(&reg, home, oppo);
+    battle.game();
+}
+
 fn main() {
-    // example_battle();
-    unique_abilities();
+    example_battle_2();
+    // unique_abilities();
 }

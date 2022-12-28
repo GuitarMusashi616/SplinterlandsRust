@@ -143,7 +143,7 @@ impl<'a> BattleData<'a> {
         match buff {
             &Ability::Health(i) => {
                 let health = monster.get_health();
-                monster.set_health(health + Ability::extent_of(i));
+                monster.set_health_new_max(health + Ability::extent_of(i));
             },
             &Ability::Armor(i) => {
                 let armor = monster.get_armor();

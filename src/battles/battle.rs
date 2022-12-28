@@ -320,7 +320,23 @@ mod tests {
 
     #[test]
     fn test_sneak_opportunity_snipe() {
+        let reg = Registry::from("assets/new_cards.csv");
+        let home = vec!["Tarsa", "Living Lava", "Magma Troll", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Feasting Seaweed", "Sniping Narwhal", "Ice Pixie"];
+        let mut battle = Battle::new(&reg, home, oppo);
 
+        let tk = targeting::target_for(&battle.battledata, &MonsterKey::Home(2)).unwrap();
+        let tk2 = targeting::target_for(&battle.battledata, &MonsterKey::Home(3)).unwrap();
+
+        assert_eq!(tk, MonsterKey::Oppo(3));
+        assert_eq!(tk2, MonsterKey::Oppo(3));
+
+        attacking::attack(&mut battle.battledata, &MonsterKey::Home(2), &tk);
+        let tk = targeting::target_for(&battle.battledata, &MonsterKey::Home(3)).unwrap();
+        assert_eq!(tk, MonsterKey::Oppo(1));
+
+        let tk = targeting::target_for(&battle.battledata, &MonsterKey::Home(4)).unwrap();
+        assert_eq!(tk, MonsterKey::Oppo(2));
     }
 
     #[test]

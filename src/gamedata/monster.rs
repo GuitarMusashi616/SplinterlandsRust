@@ -42,6 +42,13 @@ impl<'a> Monster<'a> {
         }
     }
 
+    pub fn set_health_new_max(&mut self, val: i32) {
+        self.set_health(val);
+        if self.health > self.max_health {
+            self.max_health = self.health;
+        }
+    }
+
     pub fn get_max_health(&self) -> i32 {
         self.max_health
     }
