@@ -10,6 +10,7 @@ use crate::{battles::battle::Battle, cardparse::enums::Ability};
 mod gamedata;
 mod battles;
 mod cardparse;
+mod tourney;
 
 pub fn unique_abilities() {
     let registry = Registry::from("assets/new_cards.csv");

@@ -1,6 +1,6 @@
 use std::{panic, collections::HashSet, fmt::Display};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Role {
     Summoner,
     Monster,
@@ -16,7 +16,7 @@ impl From<&str> for Role {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Element {
     Fire,
     Water,

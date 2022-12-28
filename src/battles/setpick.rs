@@ -78,7 +78,6 @@ impl SetPick {
             let mons = bd.get(elem).unwrap();
             let health = mons.get_health();
             if health < acc.0 {
-                println!("new smallest health: {}", mons);
                 acc = (health, Some(*elem));
             }
             acc

@@ -5,8 +5,17 @@ use crate::cardparse::enums::{AttackType, Ability};
 use super::{battledata::BattleData, monsterkey::MonsterKey};
 
 pub fn target_for(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
-    // path of melee
+    // initial checks
+    if bd.oppo_alive.is_empty() || bd.home_alive.is_empty() {
+        return None;
+    }
+
     let monster = bd.get(mk).expect("mk not in battledata");
+    if !monster.is_alive() {
+        return None;
+    }
+
+    // match the type of attack
     match monster.get_attack_type() {
         AttackType::Melee => target_for_melee(bd, mk),
         AttackType::Ranged => target_for_ranged(bd, mk),
@@ -33,13 +42,7 @@ pub fn target_for_opportunity(bd: &BattleData, mk: &MonsterKey) -> Option<Monste
 }
 
 pub fn target_for_melee(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
-    if bd.oppo_alive.is_empty() || bd.home_alive.is_empty() {
-        return None;
-    }
     let monster = bd.get(mk).expect("mk is not in battle");
-    // if !monster.is_alive() {
-    //     return None;
-    // }
 
     if monster.has_ability(Ability::Sneak) {
         return target_for_sneak(bd, mk);
@@ -78,13 +81,7 @@ pub fn target_for_snipe(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> 
 }
 
 pub fn target_for_ranged(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
-    if bd.oppo_alive.is_empty() || bd.home_alive.is_empty() {
-        return None;
-    }
     let monster = bd.get(mk).expect("mk is not in battle");
-    // if !monster.is_alive() {
-    //     return None;
-    // }
 
     let in_1st_pos = bd.get_pos(mk).expect("mk is not alive") == 0;
     if in_1st_pos {
@@ -103,13 +100,6 @@ pub fn target_for_ranged(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey>
 }
 
 pub fn target_for_magic(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
-    if bd.oppo_alive.is_empty() || bd.home_alive.is_empty() {
-        return None;
-    }
-    let monster = bd.get(mk).expect("mk is not in battle");
-    if !monster.is_alive() {
-        return None;
-    }
     let mut rng = thread_rng();
     match mk {
         MonsterKey::Home(_) => Some(*bd.oppo_alive.choose(&mut rng).unwrap()),
