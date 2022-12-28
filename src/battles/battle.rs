@@ -1,6 +1,6 @@
 use std::collections::{BinaryHeap, HashMap};
 
-use crate::{battles::{battledata::BattleData, targeting, attacking}, gamedata::{summoner::Summoner, monster::Monster, registry::Registry}};
+use crate::{battles::{battledata::BattleData, targeting, attacking}, gamedata::{summoner::Summoner, monster::Monster, registry::Registry}, cardparse::enums::Outcome};
 
 use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed, roundrobiniter::RoundRobinIter, monsterkey::MonsterKey};
 
@@ -13,7 +13,7 @@ pub struct Battle<'a> {
 
 
 impl<'a> Battle<'a> {
-    pub fn new(reg: &'a Registry, home: Vec<&'a str>, oppo: Vec<&'a str>) -> Self {
+    pub fn new(reg: &'a Registry, home: &'a Vec<&'a str>, oppo: &'a Vec<&'a str>) -> Self {
         let mut battledata = BattleData::new(reg, home, oppo);
         battledata.register_all_team_buffs();
         Self {
@@ -21,37 +21,25 @@ impl<'a> Battle<'a> {
         }
     }
 
-    pub fn is_over(&self) -> bool {
-        let mut home_count = 0;
-        let mut oppo_count = 0;
-        for (mk, monster) in self.battledata.monsters.iter() {
-            if monster.is_alive() {
-                match mk {
-                    MonsterKey::Home(_) => {home_count += 1},
-                    MonsterKey::Oppo(_) => {oppo_count += 1}
-                }
-                if home_count > 0 && oppo_count > 0 {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-
-    pub fn game(&mut self) {
+    pub fn game(&mut self) -> Outcome {
         let mut i = 1;
-        while !self.is_over() {
-            println!("\nRound {}:\n{:?}\n{:?}\n", i, 
-                self.battledata.home_alive.to_monster_string(&self.battledata),
-                self.battledata.oppo_alive.to_monster_string(&self.battledata)
-            );
-            self.round();
+        let mut outcome = None;
+        let mut stalled = false;
+        while outcome.is_none() && !stalled {
+            // println!("\nRound {}:\n{:?}\n{:?}\n", i, 
+            //     self.battledata.home_alive.to_monster_string(&self.battledata),
+            //     self.battledata.oppo_alive.to_monster_string(&self.battledata)
+            // );
+            stalled = self.round();
+            outcome = self.battledata.determine_winner();
             i += 1;
         }
+        outcome.unwrap_or(Outcome::Draw)
     }
     
-    pub fn round(&mut self) {
+    pub fn round(&mut self) -> bool {
         let mss = MonsterSpeed::get_vec(&self.battledata);
+        let mut stalled = true;
         for ms in RoundRobinIter::new(mss) {
             let tk = targeting::target_for(&self.battledata, &ms.mk);
             if tk.is_none() {
@@ -59,11 +47,9 @@ impl<'a> Battle<'a> {
             }
             let tk = tk.unwrap();
             attacking::attack(&mut self.battledata, &ms.mk, &tk);
+            stalled = false;
         }
-    }
-
-    pub fn turn() {
-
+        stalled
     }
 }
 
@@ -81,7 +67,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Kobold Bruiser"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = MonsterKey::Home(0);
         let player = battle.battledata.get(&mk).unwrap();
@@ -100,7 +86,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Kobold Bruiser"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let pk = &MonsterKey::Home(1);
         let target = targeting::target_for_melee(&battle.battledata, pk);
@@ -114,7 +100,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let pk = &MonsterKey::Home(1);
         let target = targeting::target_for_melee(&battle.battledata, pk).unwrap();
@@ -128,7 +114,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = &MonsterKey::Home(0);
         let tk = targeting::target_for_melee(&battle.battledata, mk).unwrap();
@@ -147,7 +133,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = &MonsterKey::Home(3);
         let target = targeting::target_for_ranged(&battle.battledata, mk).unwrap();
@@ -161,7 +147,7 @@ mod tests {
         let home = vec!["Pyre", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = &MonsterKey::Home(0);
         let target = targeting::target_for_ranged(&battle.battledata, mk);
@@ -175,7 +161,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = &MonsterKey::Oppo(2);
         let target = targeting::target_for_magic(&battle.battledata, mk).unwrap();
@@ -189,7 +175,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let mk = &MonsterKey::Oppo(2);
         let tk = &MonsterKey::Home(0);
@@ -207,7 +193,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
         
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
         let dmg = 1000;
         
         for i in 0..=2 {
@@ -230,7 +216,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
 
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         battle.battledata.deal_true_damage(&MonsterKey::Home(0), 1000);
         battle.battledata.deal_true_damage(&MonsterKey::Home(2), 1000);
@@ -254,7 +240,7 @@ mod tests {
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
 
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         battle.battledata.deal_true_damage(&MonsterKey::Home(0), 1000);
         battle.battledata.deal_true_damage(&MonsterKey::Home(2), 1000);
@@ -277,7 +263,7 @@ mod tests {
         let reg = Registry::from("assets/cards.csv");
         let home = vec!["Pyre", "Living Lava", "Magma Troll", "Kobold Bruiser", "Goblin Fireballer"];
         let oppo = vec!["Alric Stormbringer", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
-        let battle = Battle::new(&reg, home, oppo);
+        let battle = Battle::new(&reg, &home, &oppo);
         
         let troll = battle.battledata.get(&MonsterKey::Home(1)).unwrap();
         let kobold = battle.battledata.get(&MonsterKey::Home(2)).unwrap();
@@ -293,7 +279,7 @@ mod tests {
         let reg = Registry::from("assets/cards.csv");
         let home = vec!["Wizard of Eastwood", "Goblin Sorcerer"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Sniping Narwhal", "Ice Pixie"];
-        let battle = Battle::new(&reg, home, oppo);
+        let battle = Battle::new(&reg, &home, &oppo);
 
         let goblin = battle.battledata.get(&MonsterKey::Home(0)).unwrap();
         let serpent = battle.battledata.get(&MonsterKey::Oppo(0)).unwrap();
@@ -309,7 +295,7 @@ mod tests {
         let reg = Registry::from("assets/cards.csv");
         let home = vec!["Wizard of Eastwood", "Goblin Sorcerer"];
         let oppo = vec!["Tyrus Paladium", "Elven Defender", "Crystal Jaguar", "Peacebringer"];
-        let battle = Battle::new(&reg, home, oppo);
+        let battle = Battle::new(&reg, &home, &oppo);
 
         let elf = battle.battledata.get(&MonsterKey::Oppo(0)).unwrap();
         let jag = battle.battledata.get(&MonsterKey::Oppo(1)).unwrap();
@@ -323,7 +309,7 @@ mod tests {
         let reg = Registry::from("assets/new_cards.csv");
         let home = vec!["Tarsa", "Living Lava", "Magma Troll", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
         let oppo = vec!["Bortus", "Serpent of Eld", "Feasting Seaweed", "Sniping Narwhal", "Ice Pixie"];
-        let mut battle = Battle::new(&reg, home, oppo);
+        let mut battle = Battle::new(&reg, &home, &oppo);
 
         let tk = targeting::target_for(&battle.battledata, &MonsterKey::Home(2)).unwrap();
         let tk2 = targeting::target_for(&battle.battledata, &MonsterKey::Home(3)).unwrap();

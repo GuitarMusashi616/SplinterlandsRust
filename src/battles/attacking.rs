@@ -16,7 +16,7 @@ pub fn attack(bd: &mut BattleData, mk: &MonsterKey, tk: &MonsterKey) {
         AttackType::Magic => attack_magic(bd, mk, tk),
         AttackType::None => (),
     }
-    print_attack(bd, mk, tk);
+    // print_attack(bd, mk, tk);
 }
 
 pub fn attack_melee_or_ranged(bd: &mut BattleData, mk: &MonsterKey, tk: &MonsterKey) {

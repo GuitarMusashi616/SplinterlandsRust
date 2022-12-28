@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::{gamedata::{monster::Monster, summoner::Summoner, registry::Registry}, cardparse::enums::{Ability, AttackType}};
+use crate::{gamedata::{monster::Monster, summoner::Summoner, registry::Registry}, cardparse::enums::{Ability, AttackType, Outcome}};
 
 use super::{monsterkey::MonsterKey, setpick::SetPick};
 
@@ -17,7 +17,7 @@ pub struct BattleData<'a> {
 }
 
 impl<'a> BattleData<'a> {
-    pub fn new(reg: &'a Registry, home: Vec<&'a str>, oppo: Vec<&'a str>) -> Self {
+    pub fn new(reg: &'a Registry, home: &'a Vec<&'a str>, oppo: &'a Vec<&'a str>) -> Self {
         let (home_summ, home) = Self::vec_to_deck(reg, home);
         let (oppo_summ, oppo) = Self::vec_to_deck(reg, oppo);
         let (home_alive, oppo_alive) = Self::get_team_vecs(&home, &oppo);
@@ -43,7 +43,7 @@ impl<'a> BattleData<'a> {
         (home_vec, oppo_vec)
     }
 
-    pub fn vec_to_deck(reg: &'a Registry, cards: Vec<&'a str>) -> (Summoner<'a>, Vec<Monster<'a>>) {
+    pub fn vec_to_deck(reg: &'a Registry, cards: &'a Vec<&'a str>) -> (Summoner<'a>, Vec<Monster<'a>>) {
         let mut monsters = Vec::new();
         for (i, &key) in cards.iter().skip(1).enumerate() {
             if let Some(carddata) = reg.map.get(key) {
@@ -141,38 +141,38 @@ impl<'a> BattleData<'a> {
         let monster = self.monsters.get_mut(mk).unwrap();
 
         match buff {
-            &Ability::Health(i) => {
+            Ability::Health(i) => {
                 let health = monster.get_health();
-                monster.set_health_new_max(health + Ability::extent_of(i));
+                monster.set_health_new_max(health + *i as i32);
             },
-            &Ability::Armor(i) => {
+            Ability::Armor(i) => {
                 let armor = monster.get_armor();
-                monster.set_armor(armor + Ability::extent_of(i));
+                monster.set_armor(armor + *i as i32);
             },
-            &Ability::Speed(i) => {
+            Ability::Speed(i) => {
                 let speed = monster.get_speed();
-                monster.set_speed(speed + Ability::extent_of(i));
+                monster.set_speed(speed + *i as i32);
             },
-            &Ability::Melee(i) => {
+            Ability::Melee(i) => {
                 if monster.get_attack_type() != AttackType::Melee {
                     return;
                 }
                 let damage = monster.get_damage();
-                monster.set_damage(damage + Ability::extent_of(i));
+                monster.set_damage(damage + *i as i32);
             },
-            &Ability::Ranged(i) => {
+            Ability::Ranged(i) => {
                 if monster.get_attack_type() != AttackType::Ranged {
                     return;
                 }
                 let damage = monster.get_damage();
-                monster.set_damage(damage + Ability::extent_of(i));
+                monster.set_damage(damage + *i as i32);
             },
-            &Ability::Magic(i) => {
+            Ability::Magic(i) => {
                 if monster.get_attack_type() != AttackType::Magic {
                     return;
                 }
                 let damage = monster.get_damage();
-                monster.set_damage(damage + Ability::extent_of(i));
+                monster.set_damage(damage + *i as i32);
             },
             _ => (),
         }
@@ -222,6 +222,22 @@ impl<'a> BattleData<'a> {
 
     }
 
+    /// Returns None if the enemies still remain
+    pub fn determine_winner(&self) -> Option<Outcome> {
+        if self.home_alive.len() > 0 && self.oppo_alive.len() > 0 {
+            return None;
+        }
+
+        if self.home_alive.len() > 0 {
+            return Some(Outcome::Win);
+        }
+
+        if self.oppo_alive.len() > 0 {
+            return Some(Outcome::Lose);
+        }
+
+        Some(Outcome::Draw)
+    }
 }
 
 #[cfg(test)]
@@ -236,7 +252,7 @@ mod tests {
         let mut reg = Registry::from("assets/cards.csv");
         let home = vec!["Drake of Arnak", "Goblin Shaman", "Fire Beetle"];
         let oppo = vec!["Pyre", "Spineback Turtle", "Kobold Bruiser"];
-        let mut bd = BattleData::new(&reg, home, oppo);
+        let mut bd = BattleData::new(&reg, &home, &oppo);
         let exp = vec![MonsterKey::Home(0), MonsterKey::Home(1), MonsterKey::Home(2)];
 
         // assert_eq!(res, exp);

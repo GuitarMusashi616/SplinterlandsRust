@@ -30,8 +30,13 @@ impl<'a> Registry {
         }).collect()
     }
 
-    pub fn filter(&'a self, filter: impl Fn(&CardData) -> bool) -> Vec<(&'a String, &'a CardData)> {
-        self.map.iter().filter(|(name, card)| filter(card)).collect()
+    pub fn filter(&'a self, filter: impl Fn(&CardData) -> bool) -> Vec<(&'a str, &'a CardData)> {
+        self.map.iter().filter_map(|(name, card)| {
+            if filter(card) {
+                return Some((name.as_ref(), card))
+            }
+            None
+        }).collect()
     }
 }
 

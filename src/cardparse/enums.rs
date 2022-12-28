@@ -171,13 +171,13 @@ impl Ability {
         set
     }
 
-    pub fn extent_of(i: i8) -> i32 {
-        if i < 0 {
-            i as i32
-        } else {
-            i as i32
-        }
-    }
+    // pub fn extent_of(i: i8) -> i32 {
+    //     if i < 0 {
+    //         i as i32
+    //     } else {
+    //         i as i32
+    //     }
+    // }
 
     pub fn is_buff(&self) -> bool {
         match self {
@@ -204,9 +204,19 @@ impl Ability {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Outcome {
     Win,
     Draw,
     Lose,
+}
+
+impl Outcome {
+    pub fn as_f32(self) -> f32 {
+        match self {
+            Self::Win => 1.0,
+            Self::Draw => 0.5,
+            Self::Lose => 0.0,
+        }
+    }
 }
