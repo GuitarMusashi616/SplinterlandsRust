@@ -58,7 +58,7 @@ fn main() {
     let mut element = Element::Fire;
     let mut mana = 16;
     let mut train = 10;
-    let mut lines = usize::MAX;
+    let mut lines = 50;
 
     let clappers = Clappers::build()
         .set_flags(vec![

@@ -46,8 +46,9 @@ impl<'a> Battle<'a> {
                 continue;
             }
             let tk = tk.unwrap();
-            attacking::attack(&mut self.battledata, &ms.mk, &tk);
-            stalled = false;
+            if attacking::attack(&mut self.battledata, &ms.mk, &tk) {
+                stalled = false;
+            }
         }
         stalled
     }
@@ -326,8 +327,59 @@ mod tests {
     }
 
     #[test]
+    fn test_shield_and_void() {
+        let reg = Registry::from("assets/new_cards.csv");
+        let home = vec!["Tarsa", "Living Lava", "Magma Troll", "Tenyii Striker", "Serpentine Spy", "Elven Mystic"];
+        let oppo = vec!["Wizard of Eastwood", "Unicorn Mustang", "Failed Summoner"];
+        let mut battle = Battle::new(&reg, &home, &oppo);
+
+        // 7 health 0 armor attacked by 3 melee (shield should result in 2 dmg)
+        let mk_unicorn = MonsterKey::Oppo(0);
+        let mk_lava = targeting::target_for(&battle.battledata, &mk_unicorn).unwrap();
+        attacking::attack(&mut battle.battledata, &mk_unicorn, &mk_lava);
+
+        let lava = battle.battledata.get(&mk_lava).unwrap();
+        assert_eq!(lava.get_health(), 5);
+
+        // 10 health 0 armor attacked by 1 magic dmg (0 with void)
+        let mk_mystic = MonsterKey::Home(4);
+        attacking::attack(&mut battle.battledata, &mk_mystic, &mk_unicorn);
+
+        let unicorn = battle.battledata.get(&mk_unicorn).unwrap();
+        assert_eq!(unicorn.get_health(), 10);
+    }
+
+    fn test_flying_dodge_true_strike() {
+        // run 10x, if passes once then it's good
+        let reg = Registry::from("assets/new_cards.csv");
+        let home = vec!["Tarsa", "Living Lava", "Magma Troll", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
+        let oppo = vec!["Bortus", "Serpent of Eld", "Feasting Seaweed", "Sniping Narwhal", "Ice Pixie"];
+        let mut battle = Battle::new(&reg, &home, &oppo);
+
+        // 25% chance of evade
+        let mk_spy = MonsterKey::Home(3);
+        let mk_pixie = MonsterKey::Oppo(3);
+        attacking::attack(&mut battle.battledata, &mk_spy, &mk_pixie);
+        let pixie = battle.battledata.get(&mk_pixie).unwrap();
+        assert_eq!(pixie.get_health(), 1);
+
+        // 25% chance of evade
+        let mk_eld = MonsterKey::Oppo(0);
+        attacking::attack(&mut battle.battledata, &mk_spy, &mk_eld);
+        let eld = battle.battledata.get(&mk_eld).unwrap();
+        assert_eq!(eld.get_armor(), 2);
+        assert_eq!(eld.get_health(), 5);
+    }
+    
+    #[test]
+    fn test_thorns_life_leech() {
+
+    }
+
+    #[test]
     fn test_monster_buff_allies_and_removal_on_death() {
 
     }
 
+    // taunt, blast, cleanse
 }

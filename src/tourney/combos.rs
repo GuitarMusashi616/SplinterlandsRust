@@ -45,21 +45,21 @@ pub fn elo_combos(reg: &Registry, elem: Element, mana_cost: i32) -> Vec<Elo> {
     valid
 }
 
-pub fn deck_combos(reg: &Registry, elem: Element, mana_cost: i32, mut f: impl FnMut(Elo)) {
-    let elem_mon = reg.filter(|card| (card.element == elem || card.element == Element::Neutral) && card.role == Role::Monster);
-    let elem_summ = reg.filter(|card| (card.element == elem || card.element == Element::Neutral) && card.role == Role::Summoner);
+// pub fn deck_combos(reg: &Registry, elem: Element, mana_cost: i32, mut f: impl FnMut(Elo)) {
+//     let elem_mon = reg.filter(|card| (card.element == elem || card.element == Element::Neutral) && card.role == Role::Monster);
+//     let elem_summ = reg.filter(|card| (card.element == elem || card.element == Element::Neutral) && card.role == Role::Summoner);
 
-    for summ in elem_summ {
-        for combo in elem_mon.iter().combinations(5) {
-            let val = combo.iter().fold(summ.1.mana_cost, |acc, (_, card)| acc + card.mana_cost);
-            if val == mana_cost {
-                let mut res = vec![summ.0];
-                res.extend(combo.iter().map(|(name, _)| name));
-                f(Elo::new(res))
-            }
-        }
-    }
-}
+//     for summ in elem_summ {
+//         for combo in elem_mon.iter().combinations(5) {
+//             let val = combo.iter().fold(summ.1.mana_cost, |acc, (_, card)| acc + card.mana_cost);
+//             if val == mana_cost {
+//                 let mut res = vec![summ.0];
+//                 res.extend(combo.iter().map(|(name, _)| name));
+//                 f(Elo::new(res))
+//             }
+//         }
+//     }
+// }
 
 // pub fn deck_combos<'a>(reg: &'a Registry, elem: Element, mana_cost: i32, collector: &'a mut Vec<Elo<'a>>) {
 //     let elem_mon = reg.filter(|card| (card.element == elem || card.element == Element::Neutral) && card.role == Role::Monster);
@@ -114,10 +114,17 @@ pub fn super_tournament(reg: &Registry, mana_cost: i32, train: i32, lines: usize
     training(reg, &mut elos, train, lines);
 }
 
+pub fn cut_lt(elos: &mut Vec<Elo>, cutoff: f32) {
+    while elos.last().map(|x|x.elo).unwrap_or(cutoff) < cutoff {
+        elos.pop();
+    }
+}
+
 pub fn training(reg: &Registry, elos: &mut Vec<Elo>, train: i32, lines: usize) {
     for _ in 0..train {
         battle_in_pairs(elos, reg);
         elos.sort();
+        cut_lt(elos, 1000.0);
     }
 
     elos.iter_mut().take(lines).for_each(|elo| {
@@ -130,7 +137,6 @@ mod tests {
 
     use super::*;
 
-    #[test]
     fn test_combos() {
         let reg = Registry::from("assets/new_cards.csv");
         
@@ -141,7 +147,6 @@ mod tests {
         }
     }
 
-    #[test]
     fn test_tourney() {
         let reg = Registry::from("assets/new_cards.csv");
         tournament(&reg, Element::Death, 16, 10, usize::MAX);
