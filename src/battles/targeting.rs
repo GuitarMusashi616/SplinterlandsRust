@@ -103,8 +103,18 @@ pub fn target_for_ranged(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey>
     let monster = bd.get(mk).expect("mk is not in battle");
 
     let in_1st_pos = bd.get_pos(mk).expect("mk is not alive") == 0;
-    if in_1st_pos || !monster.has_ability(Ability::CloseRange) {
+
+    if in_1st_pos && monster.has_ability(Ability::CloseRange) {
+        return target_first_pos(bd, mk)
+    }
+
+    if in_1st_pos {
         return None;
+    }
+
+    let taunt = check_taunt(bd, mk);
+    if taunt.is_some() {
+        return taunt;
     }
 
     if monster.has_ability(Ability::Snipe) {
@@ -118,6 +128,13 @@ pub fn target_for_ranged(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey>
 }
 
 pub fn target_for_magic(bd: &BattleData, mk: &MonsterKey) -> Option<MonsterKey> {
+    let in_1st_pos = bd.get_pos(mk).expect("mk is not alive") == 0;
+    if !in_1st_pos {
+        let taunt = check_taunt(bd, mk);
+        if taunt.is_some() {
+            return taunt;
+        }
+    }
     target_first_pos(bd, mk)
 }
 

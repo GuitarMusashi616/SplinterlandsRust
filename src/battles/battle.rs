@@ -26,10 +26,10 @@ impl<'a> Battle<'a> {
         let mut outcome = None;
         let mut stalled = false;
         while outcome.is_none() && !stalled {
-            println!("\nRound {}:\n{:?}\n{:?}\n", i, 
-                self.battledata.home_alive.to_monster_string(&self.battledata),
-                self.battledata.oppo_alive.to_monster_string(&self.battledata)
-            );
+            // println!("\nRound {}:\n{:?}\n{:?}\n", i, 
+            //     self.battledata.home_alive.to_monster_string(&self.battledata),
+            //     self.battledata.oppo_alive.to_monster_string(&self.battledata)
+            // );
             stalled = self.round();
             outcome = self.battledata.determine_winner();
             i += 1;

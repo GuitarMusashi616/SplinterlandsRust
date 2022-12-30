@@ -18,7 +18,7 @@ pub fn attack(bd: &mut BattleData, mk: &MonsterKey, tk: &MonsterKey) -> bool {
         AttackType::Magic => attack_magic(bd, mk, tk),
         AttackType::None => false,
     };
-    print_attack(bd, mk, tk);
+    // print_attack(bd, mk, tk);
     res
 }
 

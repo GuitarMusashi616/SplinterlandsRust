@@ -59,12 +59,12 @@ pub fn example_battle_3() {
 }
 
 fn main() {
-    example_battle_3();
+    // example_battle_3();
     // unique_abilities();
-    return;
+    // return;
 
     // set defaults
-    let mut element = Element::Fire;
+    let mut element = Element::Neutral;
     let mut mana = 16;
     let mut train = 10;
     let mut lines = 50;
