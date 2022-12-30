@@ -7,3 +7,4 @@ pub mod monsterspeed;
 pub mod targeting;
 pub mod attacking;
 pub mod setpick;
+pub mod battlechecker;

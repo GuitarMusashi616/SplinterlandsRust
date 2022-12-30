@@ -8,7 +8,7 @@ use super::{roundrobin::RoundRobin, monsterspeed::MonsterSpeed, roundrobiniter::
 
 #[derive(Debug)]
 pub struct Battle<'a> {
-    battledata: BattleData<'a>,
+    pub battledata: BattleData<'a>,
 }
 
 
@@ -26,10 +26,10 @@ impl<'a> Battle<'a> {
         let mut outcome = None;
         let mut stalled = false;
         while outcome.is_none() && !stalled {
-            // println!("\nRound {}:\n{:?}\n{:?}\n", i, 
-            //     self.battledata.home_alive.to_monster_string(&self.battledata),
-            //     self.battledata.oppo_alive.to_monster_string(&self.battledata)
-            // );
+            println!("\nRound {}:\n{:?}\n{:?}\n", i, 
+                self.battledata.home_alive.to_monster_string(&self.battledata),
+                self.battledata.oppo_alive.to_monster_string(&self.battledata)
+            );
             stalled = self.round();
             outcome = self.battledata.determine_winner();
             i += 1;
@@ -52,11 +52,23 @@ impl<'a> Battle<'a> {
         }
         stalled
     }
+
+    pub fn get(&self, mk: &MonsterKey) -> Option<&Monster<'a>> {
+        self.battledata.get(mk)
+    }
+
+    pub fn index_to_mk(&self, from_home: bool, i: u8) -> MonsterKey {
+        if from_home {
+            MonsterKey::Home(i)
+        } else {
+            MonsterKey::Oppo(i)
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{gamedata::registry::Registry, battles::{monsterkey::MonsterKey, attacking, roundrobiniter::RoundRobinIter, monsterspeed::MonsterSpeed}};
+    use crate::{gamedata::registry::Registry, battles::{monsterkey::MonsterKey, attacking, roundrobiniter::RoundRobinIter, monsterspeed::MonsterSpeed, battlechecker::BattleChecker}};
 
     use super::Battle;
     use crate::battles::targeting;
@@ -369,6 +381,20 @@ mod tests {
         let eld = battle.battledata.get(&mk_eld).unwrap();
         assert_eq!(eld.get_armor(), 2);
         assert_eq!(eld.get_health(), 5);
+    }
+    #[test]
+    fn test_taunt_close_range() {
+        let home = vec!["Tarsa", "Living Lava", "Venari Spellsmith", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
+        let oppo = vec!["Obsidian", "Venari Knifer", "Mycelic Slipspawn", "Goblin Tower"];
+        let reg = Registry::from("assets/new_cards.csv");
+        let bc = BattleChecker::new(&reg, &home, &oppo);
+
+
+        bc.assert_target("Living Lava", "Venari Knifer");
+        bc.assert_target("Venari Spellsmith", "Mycelic Slipspawn");
+        bc.assert_target("Tenyii Striker", "Mycelic Slipspawn");
+        bc.assert_target("Serpentine Spy", "Mycelic Slipspawn");
+        bc.assert_target("Lava Spider", "Mycelic Slipspawn");
     }
     
     #[test]

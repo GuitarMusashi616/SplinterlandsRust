@@ -50,9 +50,18 @@ pub fn example_battle_2() {
     battle.game();
 }
 
+pub fn example_battle_3() {
+    let reg = Registry::from("assets/new_cards.csv");
+    let home = vec!["Tarsa", "Living Lava", "Venari Spellsmith", "Tenyii Striker", "Serpentine Spy", "Lava Spider"];
+    let oppo = vec!["Obsidian", "Venari Knifer", "Mycelic Slipspawn", "Goblin Tower"];
+    let mut battle = Battle::new(&reg, &home, &oppo);
+    battle.game();
+}
+
 fn main() {
-    // example_battle_2();
+    example_battle_3();
     // unique_abilities();
+    return;
 
     // set defaults
     let mut element = Element::Fire;

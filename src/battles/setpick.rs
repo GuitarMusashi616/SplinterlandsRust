@@ -89,6 +89,21 @@ impl SetPick {
         filtered.choose(&mut thread_rng()).copied().copied()
     }
 
+    pub fn first_from_filter(&self, f: impl FnMut(&&MonsterKey) -> bool) -> Option<MonsterKey> {
+        self.keys.iter().find(f).copied()
+    }
+
+    pub fn get_taunt(&self, bd: &BattleData) -> Option<MonsterKey> {
+        let filtered: Vec<_> = self.keys.iter().filter(|x| {
+            let mons = bd.get(x);
+            if mons.is_none() {
+                return true;
+            }
+            mons.unwrap().has_ability(Ability::Taunt)
+        }).collect();
+        filtered.choose(&mut thread_rng()).copied().copied()
+    }
+
     pub fn to_monster_string(&self, bd: &BattleData) -> String {
         let mons: Vec<_> = self.keys.iter().map(|x| bd.get(x).unwrap()).collect();
         let strings: Vec<_> = mons.iter().map(|x| {

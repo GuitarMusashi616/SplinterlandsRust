@@ -12,13 +12,14 @@ pub fn print_attack(bd: &BattleData, mk: &MonsterKey, tk: &MonsterKey) {
 
 pub fn attack(bd: &mut BattleData, mk: &MonsterKey, tk: &MonsterKey) -> bool {
     let monster = bd.get(mk).expect("mk not in bd");
-    match monster.get_attack_type() {
+    let res = match monster.get_attack_type() {
         AttackType::Melee => attack_melee_or_ranged(bd, mk, tk),
         AttackType::Ranged => attack_melee_or_ranged(bd, mk, tk),
         AttackType::Magic => attack_magic(bd, mk, tk),
         AttackType::None => false,
-    }
-    // print_attack(bd, mk, tk);
+    };
+    print_attack(bd, mk, tk);
+    res
 }
 
 pub fn evade_check(monster: &Monster, target: &Monster) -> bool {
